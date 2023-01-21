@@ -7,6 +7,11 @@ import datetime         # for composing date/time stamp
 import sys              # handle system error
 import traceback        # for print_exc function
 import time             # for delay purpose
+from base64 import b64decode
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Util.Padding import unpad
+from Cryptodome.Cipher import PKCS1_OAEP, AES
+from Cryptodome.Hash import SHA256
 global host, port
 
 cmd_GET_MENU = "GET_MENU"
@@ -16,6 +21,20 @@ default_save_base = "result-"
 
 host = socket.gethostname() # get the hostname or ip address
 port = 8888                 # The port used by the server
+
+
+def decrypt_private_key(ciphertext, priv_key):        # https://stackoverflow.com/questions/51228645/how-can-i-encrypt-with-a-rsa-private-key-in-python
+    decryptor = PKCS1_OAEP.new(priv_key)
+    raw_ciphertext = b64decode(ciphertext)
+    decrypted_msg = decryptor.decrypt(raw_ciphertext)
+    return decrypted_msg
+
+def aes_cbc_decrypt(key, data, IV):
+    decipher = AES.new(key, AES.MODE_CBC, IV)
+    data = decipher.decrypt(data)
+    data = unpad(data, AES.block_size)
+    return data
+
 
 def process_connection( conn , ip_addr, MAX_BUFFER_SIZE):  
     blk_count = 0
@@ -105,4 +124,4 @@ def start_server():
     soc.close()
     return
 
-start_server()  
+start_server()
